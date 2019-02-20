@@ -1,0 +1,25 @@
+{
+  "network": "",
+  "networkID": 89,
+  "chainName": "Tomo Testnet",
+  "ethScanUrl": "https://scan.testnet.tomochain.com/",
+  "endpoint": "https://testnet.tomochain.com",
+  "tokens": {
+    "TOMO": {
+      "name": "Tomochain",
+      "symbol": "TOMO",
+      "icon": "tomo",
+      "address": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "decimals": 18,
+    },
+  },
+  "connections": {
+    "http": [
+      {
+        "endPoint" : "https://testnet.tomochain.com",
+        "type": "prune"
+      }
+    ],
+    "ws": "wss://testnet.tomochain.com/ws"
+  }
+}
