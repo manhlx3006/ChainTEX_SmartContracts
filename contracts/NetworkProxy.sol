@@ -274,7 +274,7 @@ contract NetworkProxy is NetworkProxyInterface, SimpleNetworkInterface, Withdraw
 
     event NetworkSet(address newNetworkContract, address oldNetworkContract);
 
-    function setnetworkContract(NetworkInterface _networkContract) public onlyAdmin {
+    function setNetworkContract(NetworkInterface _networkContract) public onlyAdmin {
 
         require(_networkContract != address(0));
 

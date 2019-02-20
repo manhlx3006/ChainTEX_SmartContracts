@@ -342,7 +342,6 @@ contract Reserve is ReserveInterface, Withdrawable, Utils {
     ConversionRatesInterface public conversionRatesContract;
     SanityRatesInterface public sanityRatesContract;
     mapping(bytes32=>bool) public approvedWithdrawAddresses; // sha3(token,address)=>bool
-    mapping(address=>address) public tokenWallet;
 
     constructor(address _network, ConversionRatesInterface _ratesContract, address _admin) public {
         require(_admin != address(0));
@@ -412,18 +411,6 @@ contract Reserve is ReserveInterface, Withdrawable, Utils {
         emit WithdrawAddressApproved(token, addr, approve);
 
         setDecimals(token);
-        if ((tokenWallet[token] == address(0x0)) && (token != TOMO_TOKEN_ADDRESS)) {
-            tokenWallet[token] = this; // by default
-            require(token.approve(this, 2 ** 255));
-        }
-    }
-
-    event NewTokenWallet(TRC20 token, address wallet);
-
-    function setTokenWallet(TRC20 token, address wallet) public onlyAdmin {
-        require(wallet != address(0x0));
-        tokenWallet[token] = wallet;
-        emit NewTokenWallet(token, wallet);
     }
 
     event WithdrawFunds(TRC20 token, uint amount, address destination);
@@ -434,7 +421,7 @@ contract Reserve is ReserveInterface, Withdrawable, Utils {
         if (token == TOMO_TOKEN_ADDRESS) {
             destination.transfer(amount);
         } else {
-            require(token.transferFrom(tokenWallet[token], destination, amount));
+            require(token.transfer(destination, amount));
         }
 
         emit WithdrawFunds(token, amount, destination);
@@ -469,12 +456,7 @@ contract Reserve is ReserveInterface, Withdrawable, Utils {
         if (token == TOMO_TOKEN_ADDRESS)
             return address(this).balance;
         else {
-            address wallet = tokenWallet[token];
-            uint balanceOfWallet = token.balanceOf(wallet);
-            // if wallet of the token is the reserve, set allowance as max
-            uint allowanceOfWallet = (wallet == address(this)) ? MAX_QTY : token.allowance(wallet, this);
-
-            return (balanceOfWallet < allowanceOfWallet) ? balanceOfWallet : allowanceOfWallet;
+            return token.balanceOf(address(this));
         }
     }
 
@@ -572,14 +554,14 @@ contract Reserve is ReserveInterface, Withdrawable, Utils {
 
         // collect src tokens
         if (srcToken != TOMO_TOKEN_ADDRESS) {
-            require(srcToken.transferFrom(msg.sender, tokenWallet[srcToken], srcAmount), "Reserve (doTrade): Can not transfer from sender to tokenWallet");
+            require(srcToken.transferFrom(msg.sender, this, srcAmount));
         }
 
         // send dest tokens
         if (destToken == TOMO_TOKEN_ADDRESS) {
             destAddress.transfer(destAmount);
         } else {
-            require(destToken.transferFrom(tokenWallet[destToken], destAddress, destAmount), "Reserve (doTrade): can not transfer from tokenWallet to destAddress");
+            require(destToken.transfer(destAddress, destAmount));
         }
 
         emit TradeExecute(msg.sender, srcToken, srcAmount, destToken, destAmount, destAddress);
