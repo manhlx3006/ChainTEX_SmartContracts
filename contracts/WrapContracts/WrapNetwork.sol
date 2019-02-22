@@ -43,8 +43,8 @@ interface NetworkInterface {
     function getExpectedFeeRate(TRC20 token, uint srcQty) external view
         returns (uint expectedRate, uint slippageRate);
 
-    function tradeWithHint(address trader, TRC20 src, uint srcAmount, TRC20 dest, address destAddress,
-        uint maxDestAmount, uint minConversionRate, address walletId, bytes memory hint) public payable returns(uint);
+    function swap(address trader, TRC20 src, uint srcAmount, TRC20 dest, address destAddress,
+        uint maxDestAmount, uint minConversionRate, address walletId) external payable returns(uint);
     function payTxFee(address trader, TRC20 src, uint srcAmount, address destAddress,
       uint maxDestAmount, uint minConversionRate) external payable returns(uint);
 }
@@ -366,7 +366,7 @@ contract Network is Withdrawable, Utils2, NetworkInterface {
         bytes hint;
     }
 
-    function tradeWithHint(
+    function swap(
         address trader,
         TRC20 src,
         uint srcAmount,
@@ -374,14 +374,12 @@ contract Network is Withdrawable, Utils2, NetworkInterface {
         address destAddress,
         uint maxDestAmount,
         uint minConversionRate,
-        address walletId,
-        bytes memory hint
+        address walletId
     )
         public
         payable
         returns(uint)
     {
-        require(hint.length == 0);
         require(msg.sender == networkProxyContract);
 
         TradeInput memory tradeInput;
@@ -394,7 +392,6 @@ contract Network is Withdrawable, Utils2, NetworkInterface {
         tradeInput.maxDestAmount = maxDestAmount;
         tradeInput.minConversionRate = minConversionRate;
         tradeInput.walletId = walletId;
-        tradeInput.hint = hint;
 
         return trade(tradeInput);
     }
@@ -423,7 +420,6 @@ contract Network is Withdrawable, Utils2, NetworkInterface {
         tradeInput.maxDestAmount = maxDestAmount;
         tradeInput.minConversionRate = minConversionRate;
         tradeInput.walletId = address(0);
-        tradeInput.hint = new bytes(0);
 
         return tradeFee(tradeInput);
     }
@@ -821,7 +817,6 @@ contract Network is Withdrawable, Utils2, NetworkInterface {
     // @dev trade to pay for gas fee
     function tradeFee(TradeInput memory tradeInput) internal returns(uint) {
       require(isEnabled, "Network is not enabled");
-      require(tx.gasprice <= maxGasPriceValue, "gasPrice > maxGasPriceValue");
       require(validateTradeInput(tradeInput.src, tradeInput.srcAmount, tradeInput.dest, tradeInput.destAddress, true), "Failed to validate trade input");
 
       // User pays gas fee with Tomo, just a simple transfer

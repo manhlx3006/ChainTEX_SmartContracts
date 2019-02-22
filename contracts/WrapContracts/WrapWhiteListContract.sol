@@ -173,13 +173,9 @@ contract WhiteList is WhiteListInterface, Withdrawable {
     uint public weiPerSgd; // amount of weis in 1 singapore dollar
     mapping (address=>uint) public userCategory; // each user has a category defining cap on trade. 0 for standard.
     mapping (uint=>uint)    public categoryCap;  // will define cap on trade amount per category in singapore Dollar.
-    uint constant public kgtHolderCategory = 2;
-    TRC20 public kgtToken;
 
-    constructor(address _admin, TRC20 _kgtToken) public {
+    constructor(address _admin) public {
         require(_admin != address(0));
-        require(_kgtToken != address(0));
-        kgtToken = _kgtToken;
         admin = _admin;
     }
 
@@ -210,13 +206,6 @@ contract WhiteList is WhiteListInterface, Withdrawable {
     }
 
     function getUserCategory (address user) public view returns(uint) {
-        uint category = userCategory[user];
-        if (category == 0) {
-            //0 = default category. means category wasn't set.
-            if (kgtToken.balanceOf(user) > 0) {
-                category = kgtHolderCategory;
-            }
-        }
-        return category;
+        return userCategory[user];
     }
 }

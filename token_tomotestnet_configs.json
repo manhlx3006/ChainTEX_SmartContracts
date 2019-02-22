@@ -12,6 +12,24 @@
       "address": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
       "decimals": 18,
     },
+    "CTT": {
+      "name": "ChainTEX Token",
+      "symbol": "CTT",
+      "icon": "ctt",
+      "address": "0x06cca536f531ac3426077ca39b629d901c5cf272",
+      "decimals": 18,
+      "liquidityConversionRate": "0xb791bfb3c161ff3018e3633a749ca09b1c3c55b9",
+      "reserveAMM": "0x30b17b7e0ef60e0344961de1b87ec1620145c4e1"
+    },
+    "KNC": {
+      "name": "Kyber Network Crystal",
+      "symbol": "KNC",
+      "icon": "knc",
+      "address": "0x26d22feb6419d08cc38a10812a231926fe427491",
+      "decimals": 16,
+      "liquidityConversionRate": "0xbd479b9c9525f0b5216b3250a4a4d64aa3568969",
+      "reserveAMM": "0x87d7c1017e6aa0ef6eb7c4d7ef0d70e98a6a915a"
+    }
   },
   "connections": {
     "http": [
@@ -21,5 +39,12 @@
       }
     ],
     "ws": "wss://testnet.tomochain.com/ws"
-  }
+  },
+  "whitelist": "0xfa540893f0c4ca9787db0ed784617648133e39e6",
+  "networkProxy": "0x9ec198291b520f2481cd8e0d590821a339319ae7",
+  "network": "0x6b59bbbb910ef4c3b59318b67af1932f3eff15a1",
+  "expectedRate": "0x4e70e70e89321ee48c59482470d1eeaf55fd2668",
+  "admin": "0x4f2604aaC91114aE3b3D0be485D407D02B24480B",
+  "testReceiver": "0x2262d4f6312805851e3b27c40db2c7282e6e4a49",
+  "testTokenAmount": "0x1B69B4BACD05F15"
 }

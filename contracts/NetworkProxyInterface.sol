@@ -17,8 +17,8 @@ interface NetworkProxyInterface {
     function getExpectedFeeRate(TRC20 token, uint srcQty) external view
         returns (uint expectedRate, uint slippageRate);
 
-    function tradeWithHint(TRC20 src, uint srcAmount, TRC20 dest, address destAddress, uint maxDestAmount,
-        uint minConversionRate, address walletId, bytes memory hint) public payable returns(uint);
+    function swap(TRC20 src, uint srcAmount, TRC20 dest, address destAddress, uint maxDestAmount,
+        uint minConversionRate, address walletId) external payable returns(uint);
     function payTxFee(TRC20 src, uint srcAmount, address destAddress, uint maxDestAmount,
         uint minConversionRate) external payable returns(uint);
     function payTxFeeFast(TRC20 src, uint srcAmount, address destAddress) external payable returns(uint);

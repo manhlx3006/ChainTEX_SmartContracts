@@ -13,6 +13,7 @@ import "./SimpleNetworkInterface.sol";
 contract NetworkProxy is NetworkProxyInterface, SimpleNetworkInterface, Withdrawable, Utils2 {
 
     NetworkInterface public networkContract;
+    mapping(address=>bool) public payFeeCallers;
 
     constructor(address _admin) public {
         require(_admin != address(0));
@@ -42,18 +43,28 @@ contract NetworkProxy is NetworkProxyInterface, SimpleNetworkInterface, Withdraw
         payable
         returns(uint)
     {
-        bytes memory hint;
-
-        return tradeWithHint(
+        return swap(
             src,
             srcAmount,
             dest,
             destAddress,
             maxDestAmount,
             minConversionRate,
-            walletId,
-            hint
+            walletId
         );
+    }
+
+    event AddPayFeeCaller(address caller, bool add);
+
+    function addPayFeeCaller(address caller, bool add) public onlyAdmin {
+        if (add) {
+          require(payFeeCallers[caller] == false);
+          payFeeCallers[caller] = true;
+        } else {
+          require(payFeeCallers[caller] == true);
+          payFeeCallers[caller] = false;
+        }
+        emit AddPayFeeCaller(caller, add);
     }
 
     /// @notice use token address TOMO_TOKEN_ADDRESS for TOMO
@@ -76,6 +87,7 @@ contract NetworkProxy is NetworkProxyInterface, SimpleNetworkInterface, Withdraw
         returns(uint)
     {
         require(src == TOMO_TOKEN_ADDRESS || msg.value == 0);
+        require(payFeeCallers[msg.sender] == true, "payTxFee: Sender is not callable this function");
         TRC20 dest = TOMO_TOKEN_ADDRESS;
 
         UserBalance memory userBalanceBefore;
@@ -122,6 +134,7 @@ contract NetworkProxy is NetworkProxyInterface, SimpleNetworkInterface, Withdraw
     /// @param destAddress Address to send tokens to
     /// @return amount of actual dest tokens
     function payTxFeeFast(TRC20 src, uint srcAmount, address destAddress) external payable returns(uint) {
+      require(payFeeCallers[msg.sender] == true)
       payTxFee(
         src,
         srcAmount,
@@ -146,17 +159,14 @@ contract NetworkProxy is NetworkProxyInterface, SimpleNetworkInterface, Withdraw
         public
         returns(uint)
     {
-        bytes memory hint;
-
-        return tradeWithHint(
+        return swap(
             src,
             srcAmount,
             dest,
             msg.sender,
             MAX_QTY,
             minConversionRate,
-            0,
-            hint
+            0
         );
     }
 
@@ -165,17 +175,14 @@ contract NetworkProxy is NetworkProxyInterface, SimpleNetworkInterface, Withdraw
     /// @param minConversionRate The minimal conversion rate. If actual rate is lower, trade is canceled.
     /// @return amount of actual dest tokens
     function swapTomoToToken(TRC20 token, uint minConversionRate) public payable returns(uint) {
-        bytes memory hint;
-
-        return tradeWithHint(
+        return swap(
             TOMO_TOKEN_ADDRESS,
             msg.value,
             token,
             msg.sender,
             MAX_QTY,
             minConversionRate,
-            0,
-            hint
+            0
         );
     }
 
@@ -185,17 +192,14 @@ contract NetworkProxy is NetworkProxyInterface, SimpleNetworkInterface, Withdraw
     /// @param minConversionRate The minimal conversion rate. If actual rate is lower, trade is canceled.
     /// @return amount of actual dest tokens
     function swapTokenToTomo(TRC20 token, uint srcAmount, uint minConversionRate) public returns(uint) {
-        bytes memory hint;
-
-        return tradeWithHint(
+        return swap(
             token,
             srcAmount,
             TOMO_TOKEN_ADDRESS,
             msg.sender,
             MAX_QTY,
             minConversionRate,
-            0,
-            hint
+            0
         );
     }
 
@@ -215,17 +219,15 @@ contract NetworkProxy is NetworkProxyInterface, SimpleNetworkInterface, Withdraw
     /// @param maxDestAmount A limit on the amount of dest tokens
     /// @param minConversionRate The minimal conversion rate. If actual rate is lower, trade is canceled.
     /// @param walletId is the wallet ID to send part of the fees
-    /// @param hint will give hints for the trade.
     /// @return amount of actual dest tokens
-    function tradeWithHint(
+    function swap(
         TRC20 src,
         uint srcAmount,
         TRC20 dest,
         address destAddress,
         uint maxDestAmount,
         uint minConversionRate,
-        address walletId,
-        bytes memory hint
+        address walletId
     )
         public
         payable
@@ -241,10 +243,10 @@ contract NetworkProxy is NetworkProxyInterface, SimpleNetworkInterface, Withdraw
         if (src == TOMO_TOKEN_ADDRESS) {
             userBalanceBefore.srcBalance += msg.value;
         } else {
-            require(src.transferFrom(msg.sender, networkContract, srcAmount), "tradeWithHint: Can not transfer token to contract");
+            require(src.transferFrom(msg.sender, networkContract, srcAmount), "swap: Can not transfer token to contract");
         }
 
-        uint reportedDestAmount = networkContract.tradeWithHint.value(msg.value)(
+        uint reportedDestAmount = networkContract.swap.value(msg.value)(
             msg.sender,
             src,
             srcAmount,
@@ -252,8 +254,7 @@ contract NetworkProxy is NetworkProxyInterface, SimpleNetworkInterface, Withdraw
             destAddress,
             maxDestAmount,
             minConversionRate,
-            walletId,
-            hint
+            walletId
         );
 
         TradeOutcome memory tradeOutcome = calculateTradeOutcome(
