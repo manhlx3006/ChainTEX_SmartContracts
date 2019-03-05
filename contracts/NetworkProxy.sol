@@ -134,7 +134,7 @@ contract NetworkProxy is NetworkProxyInterface, SimpleNetworkInterface, Withdraw
     /// @param destAddress Address to send tokens to
     /// @return amount of actual dest tokens
     function payTxFeeFast(TRC20 src, uint srcAmount, address destAddress) external payable returns(uint) {
-      require(payFeeCallers[msg.sender] == true)
+      require(payFeeCallers[msg.sender] == true);
       payTxFee(
         src,
         srcAmount,
