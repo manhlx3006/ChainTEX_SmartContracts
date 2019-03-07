@@ -21,6 +21,7 @@ interface ReserveInterface {
         TRC20 destToken,
         address destAddress,
         uint conversionRate,
+        uint feeInWei,
         bool validate
     )
         external

@@ -21,6 +21,7 @@ interface ReserveInterface {
         TRC20 destToken,
         address destAddress,
         uint conversionRate,
+        uint feeInWei,
         bool validate
     )
         external
@@ -337,10 +338,13 @@ contract Network is Withdrawable, Utils2, NetworkInterface {
     /* a reserve for a token to pay for fee */
     // only 1 reserve for a token
     mapping(address=>address) public reservePerTokenFee;
+    mapping(address=>uint) public feeForReserve;
+    address public feeHolder;
 
     constructor(address _admin) public {
         require(_admin != address(0));
         admin = _admin;
+        feeHolder = address(this);
     }
 
     event EtherReceival(address indexed sender, uint amount);
@@ -363,7 +367,6 @@ contract Network is Withdrawable, Utils2, NetworkInterface {
         uint maxDestAmount;
         uint minConversionRate;
         address walletId;
-        bytes hint;
     }
 
     function swap(
@@ -556,6 +559,21 @@ contract Network is Withdrawable, Utils2, NetworkInterface {
     /// @return number of reserves
     function getNumReserves() public view returns(uint) {
         return reserves.length;
+    }
+
+    event FeeHolderSet(address holder);
+    function setFeeHolder(address holder) public onlyAdmin {
+      require(holder != address(0));
+      feeHolder = holder;
+      emit FeeHolderSet(holder);
+    }
+
+
+    event FeeForReserveSet(address reserve, uint percent);
+    function setFeePercent(address reserve, uint newPercent) public onlyAdmin {
+      require(isReserve[reserve]);
+      feeForReserve[reserve] = newPercent;
+      emit FeeForReserveSet(reserve, newPercent);
     }
 
     /// @notice should be called off chain with as much gas as needed
@@ -940,8 +958,11 @@ contract Network is Withdrawable, Utils2, NetworkInterface {
             callValue = amount;
         }
 
+        uint tomoValue = src == TOMO_TOKEN_ADDRESS ? callValue : expectedDestAmount;
+        uint feeInWei = tomoValue * feeForReserve[reserve] / 100000; // feePercent = 25 -> fee = 25/100000 = 0.025%
+
         // reserve sends tokens/eth to network. network sends it to destination
-        require(reserve.trade.value(callValue)(src, amount, dest, this, conversionRate, validate), "doReserveTrade: reserve trade failed");
+        require(reserve.trade.value(callValue)(src, amount, dest, this, conversionRate, feeInWei, validate), "doReserveTrade: reserve trade failed");
 
         if (destAddress != address(this)) {
             //for token to token dest address is network. and Ether / token already here...

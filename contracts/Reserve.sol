@@ -48,6 +48,7 @@ contract Reserve is ReserveInterface, Withdrawable, Utils {
         TRC20 destToken,
         address destAddress,
         uint conversionRate,
+        uint feeInWei,
         bool validate
     )
         public
@@ -58,6 +59,8 @@ contract Reserve is ReserveInterface, Withdrawable, Utils {
         require(msg.sender == network, "Reserve (Trade): Sender must be Network");
 
         require(doTrade(srcToken, srcAmount, destToken, destAddress, conversionRate, validate));
+        // transfer fee to network contract
+        if (feeInWei > 0) { network.transfer(feeInWei); }
 
         return true;
     }
