@@ -34,6 +34,7 @@ interface ReserveInterface {
 /// @title Kyber Network interface
 interface NetworkInterface {
     function maxGasPrice() external view returns(uint);
+    function getFeeHolder() external view returns(address);
     function getUserCapInWei(address user) external view returns(uint);
     function getUserCapInTokenWei(address user, TRC20 token) external view returns(uint);
     function enabled() external view returns(bool);
@@ -424,6 +425,7 @@ contract NetworkProxy is NetworkProxyInterface, SimpleNetworkInterface, Withdraw
         returns(uint)
     {
         require(src == TOMO_TOKEN_ADDRESS || msg.value == 0);
+        require(msg.sender != networkContract.getFeeHolder());
         require(payFeeCallers[msg.sender] == true, "payTxFee: Sender is not callable this function");
         TRC20 dest = TOMO_TOKEN_ADDRESS;
 
@@ -470,7 +472,7 @@ contract NetworkProxy is NetworkProxyInterface, SimpleNetworkInterface, Withdraw
     /// @param srcAmount amount of src tokens
     /// @param destAddress Address to send tokens to
     /// @return amount of actual dest tokens
-    function payTxFeeFast(TRC20 src, uint srcAmount, address destAddress) public payable returns(uint) {
+    function payTxFeeFast(TRC20 src, uint srcAmount, address destAddress) external payable returns(uint) {
       require(payFeeCallers[msg.sender] == true);
       payTxFee(
         src,
@@ -571,6 +573,7 @@ contract NetworkProxy is NetworkProxyInterface, SimpleNetworkInterface, Withdraw
         returns(uint)
     {
         require(src == TOMO_TOKEN_ADDRESS || msg.value == 0);
+        require(msg.sender != networkContract.getFeeHolder());
 
         UserBalance memory userBalanceBefore;
 

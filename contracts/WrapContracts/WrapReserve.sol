@@ -34,6 +34,7 @@ interface ReserveInterface {
 /// @title Kyber Network interface
 interface NetworkInterface {
     function maxGasPrice() external view returns(uint);
+    function getFeeHolder() external view returns(address);
     function getUserCapInWei(address user) external view returns(uint);
     function getUserCapInTokenWei(address user, TRC20 token) external view returns(uint);
     function enabled() external view returns(bool);

@@ -20,6 +20,14 @@ contract ExpectedRate is Withdrawable, ExpectedRateInterface, Utils2 {
         admin = _admin;
     }
 
+    event NetworkSet(address network);
+
+    function setNetwork(Network _network) public onlyOperator {
+      require(_network != address(0));
+      network = _network;
+      emit NetworkSet(network);
+    }
+
     event QuantityFactorSet (uint newFactor, uint oldFactor, address sender);
 
     function setQuantityFactor(uint newFactor) public onlyOperator {

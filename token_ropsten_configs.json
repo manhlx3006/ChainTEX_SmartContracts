@@ -1,5 +1,5 @@
 {
-  "network": "0x5CD950EB6319609EE1e74d62A165c4524f4141d3",
+  "networkProxy": "0xd9a5478ccf6b74a9c8b992c6a634cc1bfbc2f1bc",
   "networkID": 3,
   "chainName": "Ropsten",
   "ethScanUrl": "https://ropsten.etherscan.io/",

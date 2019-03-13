@@ -42,6 +42,7 @@ interface ReserveInterface {
 /// @title Kyber Network interface
 interface NetworkInterface {
     function maxGasPrice() external view returns(uint);
+    function getFeeHolder() external view returns(address);
     function getUserCapInWei(address user) external view returns(uint);
     function getUserCapInTokenWei(address user, TRC20 token) external view returns(uint);
     function enabled() external view returns(bool);
@@ -438,6 +439,7 @@ contract Network is Withdrawable, Utils2, NetworkInterface {
             require(!isReserve[reserve]);
             reserves.push(reserve);
             isReserve[reserve] = true;
+            feeForReserve[reserve] = 25; // default fee for reserve is 0.025% for each tx
             emit AddReserveToNetwork(reserve, true);
         } else {
             isReserve[reserve] = false;
@@ -584,6 +586,10 @@ contract Network is Withdrawable, Utils2, NetworkInterface {
 
     function maxGasPrice() public view returns(uint) {
         return maxGasPriceValue;
+    }
+
+    function getFeeHolder() public view returns(address) {
+      return feeHolder;
     }
 
     function getExpectedRate(TRC20 src, TRC20 dest, uint srcQty)
@@ -957,8 +963,28 @@ contract Network is Withdrawable, Utils2, NetworkInterface {
             callValue = amount;
         }
 
+        // calculate expected fee for this transaction based on amount of Tomo
         uint tomoValue = src == TOMO_TOKEN_ADDRESS ? callValue : expectedDestAmount;
         uint feeInWei = tomoValue * feeForReserve[reserve] / 100000; // feePercent = 25 -> fee = 25/100000 = 0.025%
+
+        // Logics: expected to receive exactly feeInWei amount of TOMO as fee from reserve.
+        // - If feeHolder and src == TOMO
+        //      + callValue of TOMO will be transfered from network -> reserve
+        // - If feeHolder is the destAdress and dest token is TOMO
+        //      + expectedDestAmount of TOMO will be transfered from reserve -> destAdress
+        uint expectedFeeHolderTomoBal = feeHolder.balance;
+        if (feeHolder == address(this) && src == TOMO_TOKEN_ADDRESS) {
+          // callValue amount of Tomo will be transfered to reserve
+          require(expectedFeeHolderTomoBal >= callValue);
+          expectedFeeHolderTomoBal -= callValue;
+        }
+        if (feeHolder == destAddress && dest == TOMO_TOKEN_ADDRESS) {
+          // expectedDestAmount of Tomo will be transfered to destAdress (which is also feeHolder)
+          expectedFeeHolderTomoBal += expectedDestAmount;
+        }
+
+        // receive feeInWei amount of Tomo as fee
+        expectedFeeHolderTomoBal += feeInWei;
 
         // reserve sends tokens/eth to network. network sends it to destination
         require(reserve.trade.value(callValue)(src, amount, dest, this, conversionRate, feeInWei, validate), "doReserveTrade: reserve trade failed");
@@ -971,6 +997,14 @@ contract Network is Withdrawable, Utils2, NetworkInterface {
                 require(dest.transfer(destAddress, expectedDestAmount), "doReserveTrade: transfer token failed");
             }
         }
+        if (feeHolder != address(this)) {
+          require(address(this).balance >= feeInWei);
+          // transfer fee to feeHolder
+          feeHolder.transfer(feeInWei);
+        }
+
+        // Expected to receive exact amount fee in TOMO
+        require(feeHolder.balance == expectedFeeHolderTomoBal);
 
         return true;
     }
@@ -1005,7 +1039,6 @@ contract Network is Withdrawable, Utils2, NetworkInterface {
     }
 }
 
-
 contract ExpectedRate is Withdrawable, ExpectedRateInterface, Utils2 {
 
     Network public network;
@@ -1017,6 +1050,14 @@ contract ExpectedRate is Withdrawable, ExpectedRateInterface, Utils2 {
         require(_network != address(0));
         network = _network;
         admin = _admin;
+    }
+
+    event NetworkSet(address network);
+
+    function setNetwork(Network _network) public onlyOperator {
+      require(_network != address(0));
+      network = _network;
+      emit NetworkSet(network);
     }
 
     event QuantityFactorSet (uint newFactor, uint oldFactor, address sender);
