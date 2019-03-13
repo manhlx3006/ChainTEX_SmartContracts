@@ -1,0 +1,41 @@
+{
+  "networkProxy": "0xd9a5478ccf6b74a9c8b992c6a634cc1bfbc2f1bc",
+  "networkID": 3,
+  "chainName": "Ropsten",
+  "ethScanUrl": "https://ropsten.etherscan.io/",
+  "endpoint": "https://ropsten.infura.io/DtzEYY0Km2BA3YwyJcBG",
+  "tokens": {
+    "ETH": {
+      "name": "Ethereum",
+      "symbol": "ETH",
+      "icon": "eth",
+      "address": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "decimals": 18,
+    },
+    "MTK": {
+      "address": "0x9bfaaf9123e03d370d972d6bb2df89d041a43780",
+      "decimals": 16,
+      "name": "Mike Token",
+      "icon": "mtk",
+      "symbol": "MTK",
+      "reserve": "0xfb75fcca6e6570df906ea5a55c5c791bb98b3dd6"
+    },
+    "CTC": {
+      "address": "0x18098c678ed6277d4922ddc069e4ddc39f99ecf7",
+      "decimals": 18,
+      "name": "ChainTEX Coin",
+      "icon": "ctc",
+      "symbol": "CTC",
+      "reserve": "0x3eec5a25118a0059c438b8b1c8bb93fda96aff46"
+    }
+  },
+  "connections": {
+    "http": [
+      {
+        "endPoint" : "https://ropsten.infura.io/DtzEYY0Km2BA3YwyJcBG",
+        "type": "prune"
+      }
+    ],
+    "ws": "wss://ropsten.kyber.network/ws/"
+  }
+}
